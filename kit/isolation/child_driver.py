@@ -181,7 +181,9 @@ def _probe_subprocess_cat(path: Path) -> dict:
 
 def _probe_ctypes_open(path: Path) -> dict:
     try:
-        libc = ctypes.CDLL("libc.dylib")
+        import ctypes.util
+        lib_name = ctypes.util.find_library("c") or ("libc.dylib" if sys.platform == "darwin" else "libc.so.6")
+        libc = ctypes.CDLL(lib_name)
         libc.open.restype = ctypes.c_int
         libc.open.argtypes = [ctypes.c_char_p, ctypes.c_int]
         fd = libc.open(str(path).encode("utf-8"), 0)
