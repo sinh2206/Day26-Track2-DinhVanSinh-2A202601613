@@ -120,10 +120,19 @@ def main(argv=None) -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run", default=None, help="a directory under runs/ (default: newest)")
     ap.add_argument("--port", type=int, default=8765)
-    ap.add_argument("--no-open", action="store_true")
+    ap.add_argument("--open", dest="no_open", action="store_false", help="open browser automatically (default)")
+    ap.add_argument("--no-open", dest="no_open", action="store_true", help="do not open browser")
+    ap.set_defaults(no_open=False)
     a = ap.parse_args(argv)
 
     run = a.run or _latest_run()
+    if run is None:
+        try:
+            import spar
+            spar.main(["--bot", "operator", "--ui", "--quiet"])
+            run = _latest_run()
+        except Exception:
+            pass
     if run is None:
         print("no runs yet — try:  python spar.py --bot operator --ui", file=sys.stderr)
         return 2

@@ -428,29 +428,29 @@ def main(argv=None) -> int:
         if min(credit_curve) < 0:
             print("     ⚠ you went NEGATIVE — a disciplined round is ~9 cr against a 100 pool")
 
+    run_dir = HERE / "runs" / f"spar-{a.bot}-{a.seed}"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "summary.json").write_text(json.dumps(log, indent=1), encoding="utf8")
+
+    # A REAL event log, not just a summary. The UI is a pure function of this file
+    # (CONTRACTS.md 10), so writing only a summary would have produced a server that
+    # answers 200 and an arena that renders an empty canvas — the most annoying
+    # possible failure, because everything "works".
+    seq = 0
+    with (run_dir / "events.jsonl").open("w", encoding="utf8") as fh:
+        def put(layer, type, side=None, producer="arena", **p):  # noqa: A002
+            nonlocal seq
+            fh.write(json.dumps({
+                "v": 1, "layer": layer, "seq": seq, "t": round(seq * 0.12, 3),
+                "run_id": run_dir.name, "duel_id": "spar", "exchange_id": "events",
+                "round": p.pop("round", 0), "side": side, "producer": producer,
+                "type": type, "p": p,
+            }, ensure_ascii=False) + "\n")
+            seq += 1
+
+        for entry in events_for_ui:
+            put(**entry)
     if a.ui:
-        run_dir = HERE / "runs" / f"spar-{a.bot}-{a.seed}"
-        run_dir.mkdir(parents=True, exist_ok=True)
-        (run_dir / "summary.json").write_text(json.dumps(log, indent=1), encoding="utf8")
-
-        # A REAL event log, not just a summary. The UI is a pure function of this file
-        # (CONTRACTS.md 10), so writing only a summary would have produced a server that
-        # answers 200 and an arena that renders an empty canvas — the most annoying
-        # possible failure, because everything "works".
-        seq = 0
-        with (run_dir / "events.jsonl").open("w", encoding="utf8") as fh:
-            def put(layer, type, side=None, producer="arena", **p):  # noqa: A002
-                nonlocal seq
-                fh.write(json.dumps({
-                    "v": 1, "layer": layer, "seq": seq, "t": round(seq * 0.12, 3),
-                    "run_id": run_dir.name, "duel_id": "spar", "exchange_id": "events",
-                    "round": p.pop("round", 0), "side": side, "producer": producer,
-                    "type": type, "p": p,
-                }, ensure_ascii=False) + "\n")
-                seq += 1
-
-            for entry in events_for_ui:
-                put(**entry)
         print(f"\n  run written to {run_dir}  ({seq} events)")
         print(f"  watch it:  python -m kit.arena_ui.serve --run {run_dir.name}")
     return 0

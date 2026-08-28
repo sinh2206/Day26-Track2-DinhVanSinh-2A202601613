@@ -24,7 +24,7 @@ install:
 	@echo "ready. no api key needed, ever."
 
 spar:
-	$(BIN)/python spar.py --bot $(BOT) --as $(ROLE)
+	$(BIN)/python spar.py --bot $(BOT) --as $(ROLE) --ui
 
 ui:
 	$(BIN)/python -m kit.arena_ui.build_ui
